@@ -1,0 +1,54 @@
+stages:
+  - build
+  - test
+  - archive
+
+variables:
+  PROJECT_NAME: "Gitlab_Swift.xcodeproj"
+  SCHEME_NAME: "Gitlab_Swift"
+  ARCHIVE_PATH: "build/Gitlab_Swift.xcarchive"
+  EXPORT_PATH: "build"
+  EXPORT_OPTIONS: "ExportOptions.plist"
+
+build_project:
+  stage: build
+  tags:
+    - AppSealingRunner
+  script:
+    - echo "===== Build Start ====="
+    - xcodebuild clean -project "$PROJECT_NAME" -scheme "$SCHEME_NAME"
+    - xcodebuild build -project "$PROJECT_NAME" -scheme "$SCHEME_NAME" -destination 'platform=iOS Simulator,name=iPhone 14,OS=17.0' | xcpretty
+    - echo "===== Build End ====="
+
+test_project:
+  stage: test
+  tags:
+    - AppSealingRunner
+  script:
+    - echo "===== Test Start ====="
+    - xcodebuild test -project "$PROJECT_NAME" -scheme "$SCHEME_NAME" -destination 'platform=iOS Simulator,name=iPhone 14,OS=17.0' | xcpretty -s
+    - echo "===== Test End ====="
+
+archive_project:
+  stage: archive
+  tags:
+    - AppSealingRunner
+  script:
+    - echo "===== Archive Start ====="
+    - xcodebuild clean archive -project "$PROJECT_NAME" -scheme "$SCHEME_NAME" -archivePath "$ARCHIVE_PATH"
+    - xcodebuild -exportArchive -archivePath "$ARCHIVE_PATH" -exportOptionsPlist "$EXPORT_OPTIONS" -exportPath "$EXPORT_PATH"
+    - echo "===== Archive End ====="
+    - ls -al "$EXPORT_PATH"
+  artifacts:
+    paths:
+      - build/*.ipa
+      - build/*.xcarchive
+
+# (필요에 따라 배포/커스텀 스테이지 추가)
+deploy:
+  stage: deploy
+  tags:
+    - AppSealingRunner
+  script:
+    - echo "Define your deployment script here!"
+
